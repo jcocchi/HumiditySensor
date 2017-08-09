@@ -3,7 +3,6 @@ import sys
 import time
 import random
 import Adafruit_ADS1x15
-import config as config
 from iothub_client import IoTHubClient, IoTHubClientError, IoTHubTransportProvider, IoTHubClientResult
 from iothub_client import IoTHubMessage, IoTHubMessageDispositionResult, IoTHubError, DeviceMethodReturnValue
 
@@ -171,7 +170,7 @@ def iothub_client_sample_run():
                 status = client.get_send_status()
                 print ( "Send status: %s" % status )
                 MESSAGE_COUNT += 1
-            time.sleep(config.MESSAGE_TIMESPAN / 1000.0)
+            time.sleep(2)
 
     except IoTHubError as iothub_error:
         print ( "Unexpected error %s from IoTHub" % iothub_error )
