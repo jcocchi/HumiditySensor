@@ -31,6 +31,10 @@ EVENT_FAILED = "failed"
 # chose HTTP, AMQP or MQTT as transport protocol
 PROTOCOL = IoTHubTransportProvider.MQTT
 
+# Humidity Variables
+HUMIDITY_CHANNEL = 0
+MAX_READING_VAL = 2047
+
 if len(sys.argv) < 2:
     print ( "You need to provide the device connection string as command line arguments." )
     sys.exit(0)
@@ -157,7 +161,7 @@ def iothub_client_sample_run():
                 # send a few messages every minute
                 print ( "IoTHubClient sending %d messages" % MESSAGE_COUNT )
                 temperature = 70
-                humidity = 100 - (float(humSensor.read_adc(humidityChannel)) / maxVal) * 100
+                humidity = 100 - (float(humSensor.read_adc(HUMIDITY_CHANNEL)) / MAX_READING_VAL) * 100
                 msg_txt_formatted = MSG_TXT % (
                     temperature,
                     humidity)
