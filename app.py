@@ -16,7 +16,6 @@ MESSAGE_SWITCH = True
 TWIN_CONTEXT = 0
 SEND_REPORTED_STATE_CONTEXT = 0
 METHOD_CONTEXT = 0
-TEMPERATURE_ALERT = 30.0
 
 # global counters
 RECEIVE_CALLBACKS = 0
@@ -53,7 +52,7 @@ if not is_correct_connection_string():
     print ( "Device connection string is not correct." )
     sys.exit(0)
 
-MSG_TXT = "{\"deviceId\": \"Raspberry Pi - Python\",\"temperature\": %f,\"humidity\": %f}"
+MSG_TXT = "{\"deviceId\": \"Raspberry Pi - Python\",\"light\": %f,\"hum\": %f}"
 
 def receive_message_callback(message, counter):
     global RECEIVE_CALLBACKS
@@ -154,17 +153,17 @@ def iothub_client_sample_run():
             reported_state = "{\"newState\":\"standBy\"}"
             client.send_reported_state(reported_state, len(reported_state), send_reported_state_callback, SEND_REPORTED_STATE_CONTEXT)
 
-        humSensor = Adafruit_ADS1x15.ADS1015()
+        adc = Adafruit_ADS1x15.ADS1015()
 
         while True:
             global MESSAGE_COUNT,MESSAGE_SWITCH
             if MESSAGE_SWITCH:
                 # send a few messages every minute
                 print ( "IoTHubClient sending %d messages" % MESSAGE_COUNT )
-                temperature = 100 - (float(humSensor.read_adc(LIGHT_CHANNEL)) / MAX_READING_VAL) * 100
-                humidity = 100 - (float(humSensor.read_adc(HUMIDITY_CHANNEL)) / MAX_READING_VAL) * 100
+                light = 100 - (float(adc.read_adc(LIGHT_CHANNEL)) / MAX_READING_VAL) * 100
+                humidity = 100 - (float(adc.read_adc(HUMIDITY_CHANNEL)) / MAX_READING_VAL) * 100
                 msg_txt_formatted = MSG_TXT % (
-                    temperature,
+                    light,
                     humidity)
                 print (msg_txt_formatted)
                 message = IoTHubMessage(msg_txt_formatted)
