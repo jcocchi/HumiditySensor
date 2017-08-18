@@ -22,7 +22,7 @@ LIGHT_CHANNEL = 1
 
 # Convert 12 bit reading to percent
 def convert_to_percent(value):
-    return 100 - ((value / MAX_READING_VAL) * 100)
+    return 100 - ((float(value) / MAX_READING_VAL) * 100)
 
 print('| Humidity | Light |')
 print('--------------------')
