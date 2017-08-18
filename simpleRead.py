@@ -20,6 +20,10 @@ GAIN = 1
 HUMIDITY_CHANNEL = 0
 LIGHT_CHANNEL = 1
 
+# Convert 12 bit reading to percent
+def convert_to_percent(value):
+    return 100 - ((value / MAX_READING_VAL) * 100)
+
 print('| Humidity | Light |')
 print('--------------------')
 while True:
@@ -32,7 +36,3 @@ while True:
 
     print('| {0:>8} | {1:>5} |'.format(*values))
     time.sleep(0.5)
-
-
-def convert_to_percent(value):
-    return 100 - ((value / MAX_READING_VAL) * 100)
