@@ -130,7 +130,7 @@ def iothub_client_init():
         receive_message_callback, RECEIVE_CONTEXT)
     client.set_device_twin_callback(
         device_twin_callback, TWIN_CONTEXT)
-   client.set_device_method_callback(
+    client.set_device_method_callback(
         device_method_callback, METHOD_CONTEXT)
     return client
 
