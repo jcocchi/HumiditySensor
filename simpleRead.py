@@ -24,9 +24,10 @@ LIGHT_CHANNEL = 1
 def convert_to_percent(value):
     return 100 - ((float(value) / MAX_READING_VAL) * 100)
 
-print('| Humidity | Light |')
-print('--------------------')
+print '| Humidity | Light |'
+print '--------------------'
 while True:
+
     values = [0]*2
 
     # Read from channel 0 for the humidity value
@@ -34,5 +35,5 @@ while True:
     # Read from channel 1 for the light value
     values[1] = adc.read_adc(LIGHT_CHANNEL, gain=GAIN)
 
-    print('| {0:>8} | {1:>5} |'.format(*values))
+    print '| {0:>8} | {1:>5} |'.format(*values)
     time.sleep(0.5)

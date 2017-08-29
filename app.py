@@ -6,8 +6,6 @@ import Adafruit_ADS1x15
 from iothub_client import IoTHubClient, IoTHubClientError, IoTHubTransportProvider, IoTHubClientResult
 from iothub_client import IoTHubMessage, IoTHubMessageDispositionResult, IoTHubError, DeviceMethodReturnValue
 
-TIMEOUT = 241000
-MINIMUM_POLLING_TIME = 9
 MESSAGE_TIMEOUT = 10000
 
 RECEIVE_CONTEXT = 0
@@ -30,11 +28,15 @@ EVENT_FAILED = "failed"
 # chose HTTP, AMQP or MQTT as transport protocol
 PROTOCOL = IoTHubTransportProvider.MQTT
 
-# Humidity Variables
+# ADC Variables
 HUMIDITY_CHANNEL = 0
 LIGHT_CHANNEL = 1
 MAX_READING_VAL = 2047
 
+# Set up message skeleton
+MSG_TXT = "{\"deviceId\": \"Raspberry Pi - Python\",\"light\": %f,\"hum\": %f}"
+
+# Verify that the connection string is present and correct
 if len(sys.argv) < 2:
     print ( "You need to provide the device connection string as command line arguments." )
     sys.exit(0)
@@ -52,8 +54,7 @@ if not is_correct_connection_string():
     print ( "Device connection string is not correct." )
     sys.exit(0)
 
-MSG_TXT = "{\"deviceId\": \"Raspberry Pi - Python\",\"light\": %f,\"hum\": %f}"
-
+#TODO: Do I need to print out message properties?
 def receive_message_callback(message, counter):
     global RECEIVE_CALLBACKS
     message_buffer = message.get_bytearray()
@@ -111,47 +112,35 @@ def device_method_callback(method_name, payload, user_context):
     return device_method_return_value
 
 
+# Convert 12 bit reading to percent
+def convert_to_percent(value):
+    return 100 - ((float(value) / MAX_READING_VAL) * 100)
+
+
 def iothub_client_init():
     # prepare iothub client
     client = IoTHubClient(CONNECTION_STRING, PROTOCOL)
-    if client.protocol == IoTHubTransportProvider.HTTP:
-        client.set_option("timeout", TIMEOUT)
-        client.set_option("MinimumPollingTime", MINIMUM_POLLING_TIME)
-    # set the time until a message times out
+ 
+    # set options
     client.set_option("messageTimeout", MESSAGE_TIMEOUT)
-    # to enable MQTT logging set to 1
-    if client.protocol == IoTHubTransportProvider.MQTT:
-        client.set_option("logtrace", 0)
+    client.set_option("logtrace", 0)
+
+    # set callbacks
     client.set_message_callback(
         receive_message_callback, RECEIVE_CONTEXT)
-    if client.protocol == IoTHubTransportProvider.MQTT or client.protocol == IoTHubTransportProvider.MQTT_WS:
-        client.set_device_twin_callback(
-            device_twin_callback, TWIN_CONTEXT)
-        client.set_device_method_callback(
-            device_method_callback, METHOD_CONTEXT)
+    client.set_device_twin_callback(
+        device_twin_callback, TWIN_CONTEXT)
+   client.set_device_method_callback(
+        device_method_callback, METHOD_CONTEXT)
     return client
-
-
-def print_last_message_time(client):
-    try:
-        last_message = client.get_last_message_receive_time()
-        print ( "Last Message: %s" % time.asctime(time.localtime(last_message)) )
-        print ( "Actual time : %s" % time.asctime() )
-    except IoTHubClientError as iothub_client_error:
-        if iothub_client_error.args[0].result == IoTHubClientResult.INDEFINITE_TIME:
-            print ( "No message received" )
-        else:
-            print ( iothub_client_error )
 
 
 def iothub_client_sample_run():
     try:
         client = iothub_client_init()
 
-        if client.protocol == IoTHubTransportProvider.MQTT:
-            print ( "IoTHubClient is reporting state" )
-            reported_state = "{\"newState\":\"standBy\"}"
-            client.send_reported_state(reported_state, len(reported_state), send_reported_state_callback, SEND_REPORTED_STATE_CONTEXT)
+        reported_state = "{\"newState\":\"standBy\"}"
+        client.send_reported_state(reported_state, len(reported_state), send_reported_state_callback, SEND_REPORTED_STATE_CONTEXT)
 
         adc = Adafruit_ADS1x15.ADS1015()
 
@@ -160,17 +149,20 @@ def iothub_client_sample_run():
             if MESSAGE_SWITCH:
                 # send a few messages every minute
                 print ( "IoTHubClient sending %d messages" % MESSAGE_COUNT )
-                light = 100 - (float(adc.read_adc(LIGHT_CHANNEL)) / MAX_READING_VAL) * 100
-                humidity = 100 - (float(adc.read_adc(HUMIDITY_CHANNEL)) / MAX_READING_VAL) * 100
+
+                # read the sensor values for light and humidity
+                light = convert_to_percent(adc.read_adc(LIGHT_CHANNEL))
+                humidity = convert_to_percent(adc.read_adc(HUMIDITY_CHANNEL))
+                
+                # format, print, and send the message
                 msg_txt_formatted = MSG_TXT % (
                     light,
                     humidity)
                 print (msg_txt_formatted)
                 message = IoTHubMessage(msg_txt_formatted)
-
                 client.send_event_async(message, send_confirmation_callback, MESSAGE_COUNT)
-                print ( "IoTHubClient.send_event_async accepted message [%d] for transmission to IoT Hub." % MESSAGE_COUNT )
 
+                # verify the message was sent
                 status = client.get_send_status()
                 print ( "Send status: %s" % status )
                 MESSAGE_COUNT += 1
@@ -181,8 +173,6 @@ def iothub_client_sample_run():
         return
     except KeyboardInterrupt:
         print ( "IoTHubClient sample stopped" )
-
-    print_last_message_time(client)
 
 
 if __name__ == "__main__":
