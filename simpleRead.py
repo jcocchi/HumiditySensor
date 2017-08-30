@@ -27,13 +27,12 @@ def convert_to_percent(value):
 print '| Humidity | Light |'
 print '--------------------'
 while True:
-
     values = [0]*2
 
     # Read from channel 0 for the humidity value
-    values[0] = adc.read_adc(HUMIDITY_CHANNEL, gain=GAIN)
+    values[0] = convert_to_percent(adc.read_adc(HUMIDITY_CHANNEL, gain=GAIN))
     # Read from channel 1 for the light value
-    values[1] = adc.read_adc(LIGHT_CHANNEL, gain=GAIN)
+    values[1] = convert_to_percent(adc.read_adc(LIGHT_CHANNEL, gain=GAIN))
 
     print '| {0:>8} | {1:>5} |'.format(*values)
     time.sleep(0.5)
